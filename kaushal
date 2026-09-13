@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { src/ CraftStore.jsx } from "react";
 import { ShoppingBag, X, Search, User, Plus, Minus, Leaf, Hand, Package } from "lucide-react";
 
 // ---- Content: a small handmade-crafts catalog ----
