@@ -1,0 +1,300 @@
+import React, { useState } from "react";
+import { ShoppingBag, X, Search, User, Plus, Minus, Leaf, Hand, Package } from "lucide-react";
+
+// ---- Content: a small handmade-crafts catalog ----
+const PRODUCTS = [
+  { id: 1, name: "Terracotta Diya Set", maker: "Radha Kumhar", price: 349, category: "Pottery", blurb: "Hand-thrown clay lamps, sun-dried and kiln-fired.", tone: "#B5722D" },
+  { id: 2, name: "Block-Print Dupatta", maker: "Imran Textiles", price: 899, category: "Textile", blurb: "Hand-stamped indigo dye on soft cotton voile.", tone: "#3B5169" },
+  { id: 3, name: "Sabai Grass Basket", maker: "Lakshmi Self-Help Group", price: 549, category: "Weaving", blurb: "Coiled grass basket, woven over three days.", tone: "#7A6A3F" },
+  { id: 4, name: "Brass Peacock Diya", maker: "Om Metal Works", price: 1249, category: "Metalwork", blurb: "Lost-wax cast brass, hand-finished with a file.", tone: "#8C6A2F" },
+  { id: 5, name: "Madhubani Wall Panel", maker: "Sita Devi", price: 1699, category: "Painting", blurb: "Natural pigments on handmade paper, framed.", tone: "#5C3A47" },
+  { id: 6, name: "Jute Table Runner", maker: "Coastal Weaves", price: 429, category: "Weaving", blurb: "Hand-loomed jute with a hand-tied fringe.", tone: "#6B7A4F" },
+];
+
+const CATEGORIES = ["All", "Pottery", "Textile", "Weaving", "Metalwork", "Painting"];
+
+function Logo() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{
+        width: 34, height: 34, borderRadius: "50%", background: "#B5722D",
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+      }}>
+        <Hand size={18} color="#EDE6D6" />
+      </div>
+      <span style={{ fontFamily: "'Fraunces', serif", fontSize: 22, fontWeight: 600, color: "#2B2420", letterSpacing: "-0.02em" }}>
+        Mitti &amp; Taar
+      </span>
+    </div>
+  );
+}
+
+export default function CraftStore() {
+  const [category, setCategory] = useState("All");
+  const [cart, setCart] = useState({}); // id -> qty
+  const [cartOpen, setCartOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("login"); // login | signup
+  const [user, setUser] = useState(null);
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  const filtered = category === "All" ? PRODUCTS : PRODUCTS.filter(p => p.category === category);
+  const cartItems = Object.entries(cart).filter(([, qty]) => qty > 0);
+  const cartCount = cartItems.reduce((s, [, qty]) => s + qty, 0);
+  const cartTotal = cartItems.reduce((s, [id, qty]) => s + PRODUCTS.find(p => p.id === Number(id)).price * qty, 0);
+
+  const addToCart = (id) => {
+    setCart(c => ({ ...c, [id]: (c[id] || 0) + 1 }));
+    showToast("Added to bag");
+  };
+  const changeQty = (id, delta) => {
+    setCart(c => {
+      const next = Math.max(0, (c[id] || 0) + delta);
+      return { ...c, [id]: next };
+    });
+  };
+
+  const handleAuthSubmit = (e) => {
+    e.preventDefault();
+    if (!form.email || !form.password || (authMode === "signup" && !form.name)) {
+      showToast("Please fill in all fields");
+      return;
+    }
+    setUser({ name: authMode === "signup" ? form.name : form.email.split("@")[0] });
+    setAuthOpen(false);
+    setForm({ name: "", email: "", password: "" });
+    showToast(authMode === "signup" ? "Account created" : "Welcome back");
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#EDE6D6", fontFamily: "'Inter', sans-serif", color: "#2B2420" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+        * { box-sizing: border-box; }
+        button { font-family: inherit; cursor: pointer; }
+        input:focus, button:focus-visible { outline: 2px solid #3B5169; outline-offset: 2px; }
+        .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(43,36,32,0.12); }
+        @media (prefers-reduced-motion: reduce) { .card-hover, .card-hover:hover { transition: none; transform: none; } }
+      `}</style>
+
+      {/* Header */}
+      <header style={{
+        position: "sticky", top: 0, zIndex: 20, background: "#EDE6D6",
+        borderBottom: "1px solid rgba(43,36,32,0.12)", padding: "14px 20px"
+      }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Logo />
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button onClick={() => setAuthOpen(true)} style={{
+              display: "flex", alignItems: "center", gap: 6, background: "none", border: "none",
+              color: "#2B2420", fontSize: 14, fontWeight: 500, padding: "6px 4px"
+            }}>
+              <User size={18} />
+              {user ? user.name : "Log in"}
+            </button>
+            <button onClick={() => setCartOpen(true)} style={{
+              position: "relative", background: "#2B2420", border: "none", borderRadius: 8,
+              padding: "8px 14px", display: "flex", alignItems: "center", gap: 8, color: "#EDE6D6"
+            }}>
+              <ShoppingBag size={17} />
+              <span style={{ fontSize: 14, fontWeight: 500 }}>{cartCount}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "56px 20px 40px", display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 40, alignItems: "center" }}>
+        <div>
+          <p style={{ color: "#8C6A2F", fontSize: 14, fontWeight: 600, margin: "0 0 10px" }}>Made by hand, not machine</p>
+          <h1 style={{
+            fontFamily: "'Fraunces', serif", fontSize: "clamp(32px, 5vw, 52px)", lineHeight: 1.08,
+            margin: "0 0 18px", fontWeight: 600, letterSpacing: "-0.01em", maxWidth: 480
+          }}>
+            Every piece carries the maker's fingerprints
+          </h1>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: "#4A4038", maxWidth: 440, margin: "0 0 26px" }}>
+            Pottery, weaves, and prints sourced directly from artisan households across India. No two pieces are identical.
+          </p>
+          <a href="#shop" style={{
+            display: "inline-block", background: "#B5722D", color: "#EDE6D6", padding: "12px 24px",
+            borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 15
+          }}>
+            Browse the collection
+          </a>
+        </div>
+        <div style={{
+          background: "#3B5169", borderRadius: 16, padding: 32, color: "#EDE6D6",
+          display: "flex", flexDirection: "column", gap: 18
+        }}>
+          <Leaf size={26} />
+          <div>
+            <div style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 600 }}>112 artisans</div>
+            <div style={{ fontSize: 14, opacity: 0.85 }}>earn directly from every sale, no middlemen</div>
+          </div>
+          <div style={{ height: 1, background: "rgba(237,230,214,0.25)" }} />
+          <div>
+            <div style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 600 }}>6 crafts</div>
+            <div style={{ fontSize: 14, opacity: 0.85 }}>pottery, weaving, metalwork, and more</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Category filter */}
+      <section id="shop" style={{ maxWidth: 1080, margin: "0 auto", padding: "10px 20px 0" }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+          {CATEGORIES.map(c => (
+            <button key={c} onClick={() => setCategory(c)} style={{
+              padding: "8px 16px", borderRadius: 20, fontSize: 14, fontWeight: 500,
+              border: c === category ? "1px solid #2B2420" : "1px solid rgba(43,36,32,0.2)",
+              background: c === category ? "#2B2420" : "transparent",
+              color: c === category ? "#EDE6D6" : "#2B2420"
+            }}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Product grid */}
+      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px 60px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 20 }}>
+          {filtered.map(p => (
+            <div key={p.id} className="card-hover" style={{
+              background: "#F7F3EA", borderRadius: 14, overflow: "hidden",
+              border: "1px solid rgba(43,36,32,0.08)", display: "flex", flexDirection: "column"
+            }}>
+              <div style={{ height: 140, background: p.tone, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Package size={38} color="rgba(237,230,214,0.85)" />
+              </div>
+              <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                <span style={{ fontSize: 12, color: "#8C6A2F", fontWeight: 600 }}>{p.category}</span>
+                <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 18, margin: 0, fontWeight: 600 }}>{p.name}</h3>
+                <p style={{ fontSize: 13, color: "#6B5F52", margin: "0 0 4px" }}>by {p.maker}</p>
+                <p style={{ fontSize: 13.5, color: "#4A4038", lineHeight: 1.5, margin: "0 0 10px", flex: 1 }}>{p.blurb}</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontWeight: 700, fontSize: 16 }}>₹{p.price}</span>
+                  <button onClick={() => addToCart(p.id)} style={{
+                    background: "#2B2420", color: "#EDE6D6", border: "none", borderRadius: 7,
+                    padding: "7px 14px", fontSize: 13, fontWeight: 600
+                  }}>
+                    Add to bag
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Cart drawer */}
+      {cartOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 30, display: "flex", justifyContent: "flex-end" }}>
+          <div onClick={() => setCartOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,36,32,0.4)" }} />
+          <div style={{ position: "relative", width: "min(380px, 90vw)", background: "#EDE6D6", height: "100%", padding: 24, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 22, margin: 0 }}>Your bag</h2>
+              <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "none" }}><X size={22} /></button>
+            </div>
+            {cartItems.length === 0 ? (
+              <p style={{ color: "#6B5F52", fontSize: 14 }}>Your bag is empty. Add a handmade piece to get started.</p>
+            ) : (
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
+                {cartItems.map(([id, qty]) => {
+                  const p = PRODUCTS.find(pr => pr.id === Number(id));
+                  return (
+                    <div key={id} style={{ display: "flex", gap: 12, alignItems: "center", borderBottom: "1px solid rgba(43,36,32,0.1)", paddingBottom: 12 }}>
+                      <div style={{ width: 48, height: 48, borderRadius: 8, background: p.tone, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{p.name}</div>
+                        <div style={{ fontSize: 13, color: "#6B5F52" }}>₹{p.price}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button onClick={() => changeQty(p.id, -1)} style={{ border: "1px solid rgba(43,36,32,0.2)", background: "none", borderRadius: 6, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center" }}><Minus size={13} /></button>
+                        <span style={{ fontSize: 13, minWidth: 14, textAlign: "center" }}>{qty}</span>
+                        <button onClick={() => changeQty(p.id, 1)} style={{ border: "1px solid rgba(43,36,32,0.2)", background: "none", borderRadius: 6, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center" }}><Plus size={13} /></button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {cartItems.length > 0 && (
+              <div style={{ borderTop: "1px solid rgba(43,36,32,0.15)", paddingTop: 16, marginTop: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14, fontSize: 15, fontWeight: 600 }}>
+                  <span>Total</span>
+                  <span>₹{cartTotal}</span>
+                </div>
+                <button onClick={() => showToast(user ? "Checkout coming soon" : "Log in to check out")} style={{
+                  width: "100%", background: "#B5722D", color: "#EDE6D6", border: "none",
+                  borderRadius: 8, padding: "12px 0", fontWeight: 600, fontSize: 15
+                }}>
+                  Checkout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Auth modal */}
+      {authOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={() => setAuthOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(43,36,32,0.45)" }} />
+          <div style={{ position: "relative", background: "#F7F3EA", borderRadius: 16, padding: 28, width: "min(360px, 100%)" }}>
+            <button onClick={() => setAuthOpen(false)} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none" }}><X size={20} /></button>
+            <div style={{ display: "flex", gap: 4, marginBottom: 22, background: "rgba(43,36,32,0.06)", borderRadius: 8, padding: 4 }}>
+              {["login", "signup"].map(m => (
+                <button key={m} onClick={() => setAuthMode(m)} style={{
+                  flex: 1, padding: "8px 0", borderRadius: 6, border: "none", fontSize: 14, fontWeight: 600,
+                  background: authMode === m ? "#2B2420" : "transparent",
+                  color: authMode === m ? "#EDE6D6" : "#2B2420"
+                }}>
+                  {m === "login" ? "Log in" : "Sign up"}
+                </button>
+              ))}
+            </div>
+            <form onSubmit={handleAuthSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {authMode === "signup" && (
+                <input placeholder="Full name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                  style={{ padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(43,36,32,0.2)", fontSize: 14, background: "#fff" }} />
+              )}
+              <input type="email" placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                style={{ padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(43,36,32,0.2)", fontSize: 14, background: "#fff" }} />
+              <input type="password" placeholder="Password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                style={{ padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(43,36,32,0.2)", fontSize: 14, background: "#fff" }} />
+              <button type="submit" style={{
+                marginTop: 6, background: "#B5722D", color: "#EDE6D6", border: "none",
+                borderRadius: 8, padding: "12px 0", fontWeight: 600, fontSize: 15
+              }}>
+                {authMode === "login" ? "Log in" : "Create account"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          background: "#2B2420", color: "#EDE6D6", padding: "10px 20px", borderRadius: 8,
+          fontSize: 14, zIndex: 50, boxShadow: "0 8px 20px rgba(0,0,0,0.2)"
+        }}>
+          {toast}
+        </div>
+      )}
+
+      <footer style={{ textAlign: "center", padding: "28px 20px", color: "#6B5F52", fontSize: 13 }}>
+        Mitti &amp; Taar — supporting Indian artisans, one piece at a time.
+      </footer>
+    </div>
+  );
+}
